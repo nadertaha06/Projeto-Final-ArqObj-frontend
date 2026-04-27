@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { buscarProdutosPorVendedor, deletarProduto } from '../../api/produtos'
+import { buscarProdutosPorVendedor, atualizarStatusProduto } from '../../api/produtos'
 import type { Produto } from '../../types'
 import { useAuth } from '../../context/AuthContext'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
@@ -13,8 +13,8 @@ export function MeusProdutosPage() {
   const navigate = useNavigate()
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [loading, setLoading] = useState(true)
-  const [deletando, setDeletando] = useState<number | null>(null)
-  const [produtoParaExcluir, setProdutoParaExcluir] = useState<Produto | null>(null)
+  const [atualizandoStatus, setAtualizandoStatus] = useState<number | null>(null)
+  const [produtoParaAlternar, setProdutoParaAlternar] = useState<Produto | null>(null)
 
   async function carregar() {
     if (!usuario) return
@@ -26,16 +26,17 @@ export function MeusProdutosPage() {
 
   useEffect(() => { carregar() }, [usuario])
 
-  async function handleDeletar(produto: Produto) {
-    setDeletando(produto.id)
+  async function handleAlternarStatus(produto: Produto) {
+    setAtualizandoStatus(produto.id)
     try {
-      await deletarProduto(produto.id)
-      toast.success('Produto excluído.')
-      setProdutos((prev) => prev.filter((p) => p.id !== produto.id))
+      const ativoAtualizado = !produto.ativo
+      const res = await atualizarStatusProduto(produto.id, ativoAtualizado)
+      toast.success(ativoAtualizado ? 'Produto ativado.' : 'Produto desativado.')
+      setProdutos((prev) => prev.map((p) => (p.id === produto.id ? res.data : p)))
     } catch {
-      toast.error('Erro ao excluir produto.')
+      toast.error('Erro ao atualizar status do produto.')
     } finally {
-      setDeletando(null)
+      setAtualizandoStatus(null)
     }
   }
 
@@ -89,7 +90,12 @@ export function MeusProdutosPage() {
                             (e.target as HTMLImageElement).src = 'https://placehold.co/48x48?text=?'
                           }}
                         />
-                        <span className="font-medium text-gray-800">{produto.nome}</span>
+                        <div>
+                          <span className="font-medium text-gray-800">{produto.nome}</span>
+                          {!produto.ativo && (
+                            <p className="text-xs text-red-600 font-medium">Inativo</p>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-center text-indigo-600 font-semibold">
@@ -114,11 +120,11 @@ export function MeusProdutosPage() {
                           Editar
                         </button>
                         <button
-                          onClick={() => setProdutoParaExcluir(produto)}
-                          disabled={deletando === produto.id}
-                          className="text-sm bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50"
+                          onClick={() => setProdutoParaAlternar(produto)}
+                          disabled={atualizandoStatus === produto.id}
+                          className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 ${produto.ativo ? 'bg-red-50 hover:bg-red-100 text-red-600' : 'bg-green-50 hover:bg-green-100 text-green-700'}`}
                         >
-                          {deletando === produto.id ? '...' : 'Excluir'}
+                          {atualizandoStatus === produto.id ? '...' : produto.ativo ? 'Desativar' : 'Ativar'}
                         </button>
                       </div>
                     </td>
@@ -130,17 +136,19 @@ export function MeusProdutosPage() {
         )}
       </div>
       <ConfirmDialog
-        open={!!produtoParaExcluir}
-        title="Excluir produto"
-        description={produtoParaExcluir ? `Deseja excluir "${produtoParaExcluir.nome}"? Essa ação não pode ser desfeita.` : ''}
-        confirmText="Excluir"
+        open={!!produtoParaAlternar}
+        title={produtoParaAlternar?.ativo ? 'Desativar produto' : 'Ativar produto'}
+        description={produtoParaAlternar ? (produtoParaAlternar.ativo
+          ? `Deseja desativar "${produtoParaAlternar.nome}"? Ele deixará de aparecer para compra, mas continuará em pedidos já feitos.`
+          : `Deseja ativar "${produtoParaAlternar.nome}"? Ele voltará a aparecer para compra.`) : ''}
+        confirmText={produtoParaAlternar?.ativo ? 'Desativar' : 'Ativar'}
         cancelText="Cancelar"
-        variant="danger"
-        onCancel={() => setProdutoParaExcluir(null)}
+        variant={produtoParaAlternar?.ativo ? 'danger' : 'default'}
+        onCancel={() => setProdutoParaAlternar(null)}
         onConfirm={() => {
-          if (!produtoParaExcluir) return
-          void handleDeletar(produtoParaExcluir)
-          setProdutoParaExcluir(null)
+          if (!produtoParaAlternar) return
+          void handleAlternarStatus(produtoParaAlternar)
+          setProdutoParaAlternar(null)
         }}
       />
     </div>

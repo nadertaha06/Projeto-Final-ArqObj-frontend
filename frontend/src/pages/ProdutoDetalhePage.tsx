@@ -90,9 +90,10 @@ export function ProdutoDetalhePage() {
   if (!produto) return <p className="text-center py-20 text-gray-500">Produto não encontrado.</p>
 
   const estoque = produto.estoque?.quantidade ?? 0
+  const inativo = produto.ativo === false
   const semEstoque = estoque === 0
   const ehVendedor = usuario?.id === produto.vendedor?.id
-  const podeComprar = isCliente() && !ehVendedor && !semEstoque
+  const podeComprar = isCliente() && !ehVendedor && !semEstoque && !inativo
   const podeAvaliar = !!pedidoEntregue && !jaAvaliou
 
   const mediaNotas =
@@ -138,8 +139,8 @@ export function ProdutoDetalhePage() {
                 {produto.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
 
-              <p className={`text-sm mb-4 ${semEstoque ? 'text-red-500' : 'text-green-600'}`}>
-                {semEstoque ? 'Sem estoque' : `${estoque} unidades disponíveis`}
+              <p className={`text-sm mb-4 ${inativo || semEstoque ? 'text-red-500' : 'text-green-600'}`}>
+                {inativo ? 'Produto indisponível no momento' : semEstoque ? 'Sem estoque' : `${estoque} unidades disponíveis`}
               </p>
 
               {!semEstoque && podeComprar && (
@@ -159,10 +160,10 @@ export function ProdutoDetalhePage() {
               {isCliente() && !ehVendedor && (
                 <button
                   onClick={handleAdicionarCarrinho}
-                  disabled={semEstoque || adicionando}
+                  disabled={semEstoque || adicionando || inativo}
                   className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 px-6 rounded-lg font-semibold transition-colors"
                 >
-                  {adicionando ? 'Adicionando...' : semEstoque ? 'Sem estoque' : 'Adicionar ao Carrinho'}
+                  {adicionando ? 'Adicionando...' : inativo ? 'Indisponível' : semEstoque ? 'Sem estoque' : 'Adicionar ao Carrinho'}
                 </button>
               )}
             </div>

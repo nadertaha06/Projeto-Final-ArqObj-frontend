@@ -26,6 +26,7 @@ export interface Produto {
   descricao: string
   preco: number
   imagemUrl: string
+  ativo: boolean
   categoria: Categoria
   estoque: Estoque
   vendedor: { id: number; nome: string; nomeLoja: string }

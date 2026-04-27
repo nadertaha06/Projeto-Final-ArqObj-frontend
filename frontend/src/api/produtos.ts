@@ -28,5 +28,8 @@ export const criarProduto = (data: CreateProdutoData) =>
 export const atualizarProduto = (id: number, data: Partial<CreateProdutoData>) =>
   api.put<Produto>(`/api/produtos/${id}`, data)
 
+export const atualizarStatusProduto = (id: number, ativo: boolean) =>
+  api.patch<Produto>(`/api/produtos/${id}/ativo`, null, { params: { ativo } })
+
 export const deletarProduto = (id: number) =>
   api.delete(`/api/produtos/${id}`)
