@@ -11,8 +11,16 @@ export interface EnderecoEntregaData {
   cep: string
 }
 
-export const criarPedido = (clienteId: number, enderecoEntrega?: EnderecoEntregaData) =>
-  api.post<Pedido>(`/api/pedidos/cliente/${clienteId}`, enderecoEntrega ? { enderecoEntrega } : {})
+export interface CupomAplicadoData {
+  codigo: string
+  produtoId: number
+}
+
+export const criarPedido = (clienteId: number, enderecoEntrega?: EnderecoEntregaData, cupomAplicado?: CupomAplicadoData) =>
+  api.post<Pedido>(`/api/pedidos/cliente/${clienteId}`, {
+    ...(enderecoEntrega ? { enderecoEntrega } : {}),
+    ...(cupomAplicado ? { cupomAplicado } : {}),
+  })
 
 export const listarPedidos = () =>
   api.get<Pedido[]>('/api/pedidos')

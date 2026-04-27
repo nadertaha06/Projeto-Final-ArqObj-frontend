@@ -128,7 +128,11 @@ export function CheckoutPage() {
 
       let pedidoId: number
       try {
-        const pedidoRes = await criarPedido(usuario.id, enderecoEntrega)
+        const pedidoRes = await criarPedido(
+          usuario.id,
+          enderecoEntrega,
+          cupom ? { codigo: cupom.codigo, produtoId: cupom.produtoId } : undefined
+        )
         pedidoId = pedidoRes.data.id
       } catch (error) {
         // Se o carrinho já foi convertido em pedido numa tentativa anterior,
